@@ -9,8 +9,7 @@ const customerSchema = new mongooose.Schema({
     emailID: { type: String, required: true },
     address: { type: String },
     customerID: { type: String, required: true },
-    status: { type: String, enum: ["ACTIVE", "INACTIVE"] }
-
+    status: { type: String, enum: ["ACTIVE", "INACTIVE"] , default : "ACTIVE" }
 })
 
 module.exports = mongooose.model("customerDetail" , customerSchema)
