@@ -2,6 +2,7 @@ const express = require("express")
 const router = express.Router()
 const {auth} =  require("../middleware/auth")
 const {customerRegister , cutomerActive , deleteCustomer} = require("../controllers/customerController")
+const { createCard } = require("../controllers/cardController")
 
 //===================================Customer Api ==============================================//
 
@@ -13,7 +14,7 @@ router.delete('/delete/:userId',auth,deleteCustomer)
 
 //====================================Card Api =====================================================//
 
-
+router.post('/createCard',auth,createCard)
 
 
 router.apply("*" ,(req, res)=>{

@@ -5,7 +5,7 @@ const isValid = (name)=>{
 }
 
 const isValidChar = (name)=>{
-    return /^[a-z]{2,100}$/i.test(name) 
+    return /^[a-z0-9]{2,100}$/i.test(name) 
 }
 
 const isValidMobileNo = (phone)=>{

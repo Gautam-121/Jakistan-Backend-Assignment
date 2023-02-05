@@ -11,10 +11,10 @@ const customerRegister = async (req, res)=> {
 
     const data = req.body
     // Body Is Empty
-    if(!data) return res.status(400).send({status : false , msg : "Body is Emppty , plz provide info"})
+    if(Object.keys(data).length == 0) return res.status(400).send({status : false , msg : "Body is Emppty , plz provide info"})
 
     // Destructuring The Body Data
-    let {firstName , lastName , mobileNumber ,DOB , emailID ,address} = data
+    const {firstName , lastName , mobileNumber ,DOB , emailID ,address} = data
 
     // Validate firstName
     if(!isValid(firstName)) return res.status(400).send({status : false , msg : "firstName is manondatory"})
@@ -29,12 +29,12 @@ const customerRegister = async (req, res)=> {
     if(!isValidMobileNo(mobileNumber)) return res.status(400).send({status : false , msg : "mobile number should be 10 digit Indian number"})
 
     // Validate DOB
-    let currentDate = new Date()
-    let cDay = currentDate.getDate()
-    let cMonth = currentDate.getMonth() + 1
-    let cYear = currentDate.getFullYear()
+    const cDay = currentDate.getDate()
+    const currentDate = new Date()
+    const cMonth = currentDate.getMonth() + 1
+    const cYear = currentDate.getFullYear()
 
-    let todayDate = `${cYear}-${cMonth}-${cDay}`
+    const todayDate = `${cYear}-${cMonth}-${cDay}`
 
     if(!isValid(DOB)) return res.status(400).send({status : false , msg : "DOB is manondatory"})
     if(!moment(DOB , "YYYY-MM-DD",true).isValid() || moment().isAfter(todayDate)) return res.status(400).send({staus : false , msg : `DOB is Invalid , DOB must be less than or equal to ${todayDate} and Date Format must be YYYY-MM-DD`})
@@ -43,7 +43,7 @@ const customerRegister = async (req, res)=> {
     if(!isValid(emailID)) return res.status(400).send({status : false , msg : "EmailId is manondatory"})
     if(!isValidEmail(emailID)) return res.status(400).send({status : false , msg : "Invalid Email Format , Please Provide valid email"})
 
-    let isEmailAlready = await customerModel.findOne(emailID)
+    let isEmailAlready = await customerModel.findOne({emailID : emailID , staus : "ACTIVE" })
     if(isEmailAlready) return res.status(409).send({status : false , msg : `${emailID} is already Exist`})
     
     // Validate Address
@@ -51,9 +51,13 @@ const customerRegister = async (req, res)=> {
 
     // final object for storing In DB
     const updatedData = {
-        firstName , lastName , mobileNumber ,DOB , emailID ,address,
+        firstName , 
+        lastName , 
+        mobileNumber ,
+        DOB , 
+        emailID ,
+        address,
         customerID : uuid(),
-        status : "ACTIVE"
     }
     // Create Document of Customer in DataBase
     const userData =  await customerModel.create(updatedData)
@@ -62,7 +66,7 @@ const customerRegister = async (req, res)=> {
     const token = jwt.sign({
 
         customerID : customerID,
-        createdAt : Date.now(),
+        createdAt : todayDate,
         expiredIn : "1day"
 
     },"validateUserAuthorization")
@@ -93,15 +97,16 @@ const deleteCustomer = async (req, res)=>{
 
     try{
 
-    let decodedToken = req.decodedToken
-    let customerId   = req.path.userId
+    const decodedToken = req.decodedToken
+    const customerId   = req.path.userId
     
     //Check it is Authorized Person
+    if(!isValid(customerId)) return res.status(400).send({status : false , msg : "cardType is Mandatory"})
     if(!uuid.validate(customerId)) return res.status(400).send({status : false , msg : "Invalid CustomerId"})
     if(decodedToken.customerID!==customerId) return res.status(403).send({status : false , msg : "It is Not Authorized Person"})
 
     // find document using CustomerID and update status
-    let deleteDoc = await customerModel.findOne({customerID : customerId},{$set : {status : "INACTIVE"}})
+    const deleteDoc = await customerModel.findOne({customerID : customerId},{$set : {status : "INACTIVE"}})
 
     if(!deleteDoc) return res.status(400).send({status : false , msg : "No Document Found , customer Already Deleted"})
 
