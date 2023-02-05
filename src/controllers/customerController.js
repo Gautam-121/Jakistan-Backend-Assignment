@@ -29,8 +29,15 @@ const customerRegister = async (req, res)=> {
     if(!isValidMobileNo(mobileNumber)) return res.status(400).send({status : false , msg : "mobile number should be 10 digit Indian number"})
 
     // Validate DOB
-    if(!isValid(DOB)) return res.status(400).send({status : false , msg : "mobileNumber is manondatory"})
-    // write code on DOB Manupulation
+    let currentDate = new Date()
+    let cDay = currentDate.getDate()
+    let cMonth = currentDate.getMonth() + 1
+    let cYear = currentDate.getFullYear()
+
+    let todayDate = `${cYear}-${cMonth}-${cDay}`
+
+    if(!isValid(DOB)) return res.status(400).send({status : false , msg : "DOB is manondatory"})
+    if(!moment(DOB , "YYYY-MM-DD",true).isValid() || moment().isAfter(todayDate)) return res.status(400).send({staus : false , msg : `DOB is Invalid , DOB must be less than or equal to ${todayDate} and Date Format must be YYYY-MM-DD`})
 
     // Validate EmailId
     if(!isValid(emailID)) return res.status(400).send({status : false , msg : "EmailId is manondatory"})
@@ -54,7 +61,7 @@ const customerRegister = async (req, res)=> {
     //unique token creation using Jwt package
     const token = jwt.sign({
 
-        userID : userData._id,
+        customerID : customerID,
         createdAt : Date.now(),
         expiredIn : "1day"
 
@@ -69,13 +76,40 @@ const customerRegister = async (req, res)=> {
 
 const cutomerActive = async (req , res) => {
 
+    try{
+    
+    //Find All active user in database
     const data = await customerModel.find({status : "ACTIVE"})
 
     if(data.length == 0) return res.status(200).send({status : true , msg : "No customer is Active"})
     return res.status(200).send({status : true , data : data})
+
+    }catch(err){
+        return res.status(500).send({status : false , msg : err.message})
+    }
 }
 
 const deleteCustomer = async (req, res)=>{
+
+    try{
+
+    let decodedToken = req.decodedToken
+    let customerId   = req.path.userId
     
+    //Check it is Authorized Person
+    if(!uuid.validate(customerId)) return res.status(400).send({status : false , msg : "Invalid CustomerId"})
+    if(decodedToken.customerID!==customerId) return res.status(403).send({status : false , msg : "It is Not Authorized Person"})
+
+    // find document using CustomerID and update status
+    let deleteDoc = await customerModel.findOne({customerID : customerId},{$set : {status : "INACTIVE"}})
+
+    if(!deleteDoc) return res.status(400).send({status : false , msg : "No Document Found , customer Already Deleted"})
+
+    return res.status(204).send({status : true , msg : "Customer Account Deleted Succesfully!"})
+
+    }catch(err){
+      return res.status(500).send({status : false , msg : err.message})
+    }
 }
-module.exports = {customerRegister}
+
+module.exports = {customerRegister ,cutomerActive,deleteCustomer}
