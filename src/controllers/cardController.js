@@ -28,7 +28,7 @@ const createCard = async (req,res)=>{
     if(!isValid(customerName)) return res.status(400).send({status : false , msg : "CustomerName is Mandatory"})
     if(!isValidChar(customerName)) return res.status(400).send({status :false , msg : "customerName is Invalid , name must contain character and Number only"})
     
-    const totalDoc = await cardModel.find().count
+    const totalDoc = await cardModel.find().count()
     
     //create fnal Object for storing in DB
     const finalData  = {
@@ -46,4 +46,24 @@ const createCard = async (req,res)=>{
     }   
 }
 
-module.exports = {createCard}
+const cardList = async (req,res)=> {
+        
+   try {
+
+    const decodedToken = req.decodedToken
+    const customerId   = req.path.userId
+    
+    //Check it is Authorized Person
+    if(!isValid(customerId)) return res.status(400).send({status : false , msg : "cardType is Mandatory"})
+    if(!uuid.validate(customerId)) return res.status(400).send({status : false , msg : "Invalid CustomerId"})
+    if(decodedToken.customerID!==customerId) return res.status(403).send({status : false , msg : "It is Not Authorized Person"})
+  
+    const allCardList =  await cardModel.find()
+
+    return allCardList.length == 0 ? res.status(200).send({status : false , msg : "No card is Created"}) : res.status(200).send({status : true , data : allCardList})
+   }catch {
+    res.status(500).send({status : false , msg : err.message})
+   }
+}
+
+module.exports = {createCard , cardList}
